@@ -9,6 +9,7 @@ interface User {
 
 // Define the context's shape
 interface UserContextType {
+  id: any;
   user: User | null;
   login: (userData: User) => void;
   logout: () => void;

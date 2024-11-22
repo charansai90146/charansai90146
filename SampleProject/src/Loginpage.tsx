@@ -19,7 +19,7 @@ const LoginPage = () => {
   
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
-  const { login } = useUser(); // Destructure login function from context
+  const { login } = useUser(); 
 
  
   const handleLogin = (e: FormEvent) => {
@@ -31,6 +31,7 @@ const LoginPage = () => {
     if (user) {
       
       login({ id: user.id, name: user.username, role: user.role });
+      console.log(login,'log')
     } else {
       alert('Invalid credentials');
     }

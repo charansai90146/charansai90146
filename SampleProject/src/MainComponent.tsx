@@ -5,11 +5,13 @@ import { candidates, candidatesget, deleteCandidate, putCandidate } from './Serv
 import { useEffect, useState } from 'react';
 import DataGrid, { Column,   } from 'devextreme-react/data-grid';
 import 'devextreme/dist/css/dx.light.css';
-
+import { useUser } from './UserContext';
 const MainComponent = () => {
-
+  const user = useUser()
+   
     const [fdata, setFData] = useState([]);
     const [selectedCandidate, setSelectedCandidate] = useState(null);
+   
     const myformik = useFormik({
       initialValues: {
         fullName: '',
@@ -31,7 +33,8 @@ const MainComponent = () => {
             Email: myformik.values.email,
             Age: myformik.values.age,
             BloodGroup: myformik.values.bloodGroup,
-            Address: myformik.values.address
+            Address: myformik.values.address,
+            
           };
           putCandidate(selectedCandidate?.id,data).subscribe({
             next:(response:any)=>{
@@ -48,13 +51,16 @@ const MainComponent = () => {
             Email: myformik.values.email,
             Age: myformik.values.age,
             BloodGroup: myformik.values.bloodGroup,
-            Address: myformik.values.address
+            Address: myformik.values.address,
+            UserId:user.user.id
           };
+         console.log(data,'dtaa')
           candidates(data).subscribe({
             next: (response) => {
               if (response.status === 201) {
                 console.log(response.data, 'myData');
                 setCount(count + 1);
+              
               }
             },
             error: (err) => {
@@ -81,9 +87,11 @@ const MainComponent = () => {
     };
     const[count, setCount]=useState(0)
     useEffect(() => {
+      alert('outide')
       candidatesget().subscribe({
         next: (response) => {
           if (response.status === 200) {
+            alert('inside')
             setFData(response.data);
           }
         },
@@ -96,12 +104,12 @@ const MainComponent = () => {
   
     const handleDelete = (id) => {
       deleteCandidate(id).subscribe({
-        next: (response) => {
+        next: (response:any) => {
           if (response.status === 204) {
               setCount(count + 1);
           }
       },
-        error: (error) => {
+        error: (error:any) => {
           console.error('Error deleting candidate:', error);
         }
       });
