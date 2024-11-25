@@ -9,7 +9,7 @@ interface User {
 
 // Define the context's shape
 interface UserContextType {
-  id: any;
+  id: number; // id is required here
   user: User | null;
   login: (userData: User) => void;
   logout: () => void;
@@ -35,14 +35,17 @@ export const UserProvider = ({ children }: UserProviderProps) => {
   };
 
   return (
-    <UserContext.Provider value={{ user, login, logout }}>
+    <UserContext.Provider value={{ 
+      id: user ? user.id : -1, 
+      user, 
+      login, 
+      logout 
+    }}>
       {children}
     </UserContext.Provider>
   );
 };
 
-// Custom hook to use the UserContext
-// eslint-disable-next-line react-refresh/only-export-components
 export const useUser = (): UserContextType => {
   const context = useContext(UserContext);
   if (!context) {

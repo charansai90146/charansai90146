@@ -3,122 +3,121 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { candidates, candidatesget, deleteCandidate, putCandidate } from './Services';
 import { useEffect, useState } from 'react';
-import DataGrid, { Column,   } from 'devextreme-react/data-grid';
-import 'devextreme/dist/css/dx.light.css';
 import { useUser } from './UserContext';
+import TableComponent from './TableComponent';
+import ApproveAndRevertBtn from './ApproveAndRevertBtn';
+
 const MainComponent = () => {
-  const user = useUser()
-   
-    const [fdata, setFData] = useState([]);
-    const [selectedCandidate, setSelectedCandidate] = useState(null);
-   
-    const myformik = useFormik({
-      initialValues: {
-        fullName: '',
-        email: '',
-        mobile: '',
-        age: '12',
-        address: '',
-        bloodGroup: ''
-      },
-      onSubmit: () => {
-       
-        if(selectedCandidate){
-          console.log(selectedCandidate)
-          alert('dtfghfghf')
-          const data = {
-            Id:selectedCandidate?.id,
-            FullName: myformik.values.fullName,
-            Mobile: myformik.values.mobile,
-            Email: myformik.values.email,
-            Age: myformik.values.age,
-            BloodGroup: myformik.values.bloodGroup,
-            Address: myformik.values.address,
-            
-          };
-          putCandidate(selectedCandidate?.id,data).subscribe({
-            next:(response:any)=>{
-              if (response.status === 204) {
-                
-                setCount(count + 1);
-              }
-            }
-          })
-        }else{
-          const data = {
-            FullName: myformik.values.fullName,
-            Mobile: myformik.values.mobile,
-            Email: myformik.values.email,
-            Age: myformik.values.age,
-            BloodGroup: myformik.values.bloodGroup,
-            Address: myformik.values.address,
-            UserId:user.user.id
-          };
-         console.log(data,'dtaa')
-          candidates(data).subscribe({
-            next: (response) => {
-              if (response.status === 201) {
-                console.log(response.data, 'myData');
-                setCount(count + 1);
-              
-              }
-            },
-            error: (err) => {
-              console.error("Error submitting data:", err);
-            }
-          });
-        }
-  
-       
-        myformik.resetForm();
-      },
-      validationSchema: Yup.object().shape({
-        fullName: Yup.string().required().trim(),
-        email: Yup.string().required().trim(),
-        mobile: Yup.string().required().trim(),
-        address: Yup.string().required().trim(),
-        age: Yup.string().required().trim(),
-        bloodGroup: Yup.string().required().trim(),
-      })
-    });
-  
-    const insertCall = () => {
-      myformik.handleSubmit(); 
-    };
-    const[count, setCount]=useState(0)
-    useEffect(() => {
-      alert('outide')
-      candidatesget().subscribe({
-        next: (response) => {
-          if (response.status === 200) {
-            alert('inside')
-            setFData(response.data);
-          }
-        },
-        error: (err) => {
-          console.error("Error fetching data:", err);
-        }
-      });
-    }, [count]); 
-  
-  
-    const handleDelete = (id) => {
-      deleteCandidate(id).subscribe({
-        next: (response:any) => {
-          if (response.status === 204) {
+  const user = useUser(); // Get the current user
+  const [fdata, setFData] = useState([]);
+  const [selectedCandidate, setSelectedCandidate] = useState(null);
+  const [count, setCount] = useState(0);
+console.log(fdata,'get')
+  // Formik form handling
+  const myformik = useFormik({
+    initialValues: {
+      fullName: '',
+      email: '',
+      mobile: '',
+      age: '12',
+      address: '',
+      bloodGroup: ''
+    },
+    onSubmit: () => {
+      const data = {
+        FullName: myformik.values.fullName,
+        Mobile: myformik.values.mobile,
+        Email: myformik.values.email,
+        Age: myformik.values.age,
+        BloodGroup: myformik.values.bloodGroup,
+        Address: myformik.values.address,
+        UserId: user.user.id ,
+        UserName:user.user.role,
+      };
+console.log(data,'setdat')
+      if (selectedCandidate) {
+        
+        const updateData = {
+          Id: selectedCandidate.id,
+          ...data // Update other fields
+        };
+        putCandidate(selectedCandidate.id, updateData).subscribe({
+          next: (response: any) => {
+            if (response.status === 204) {
               setCount(count + 1);
+            }
+          },
+          error: (err) => {
+            console.error("Error updating data:", err);
           }
-      },
-        error: (error:any) => {
-          console.error('Error deleting candidate:', error);
+        });
+      } else {
+        // Add new candidate
+        candidates(data).subscribe({
+          next: (response) => {
+            if (response.status === 201) {
+              console.log(response.data, 'myData');
+              setCount(count + 1);
+            }
+          },
+          error: (err) => {
+            console.error("Error submitting data:", err);
+          }
+        });
+      }
+      myformik.resetForm();
+    },
+    validationSchema: Yup.object().shape({
+      fullName: Yup.string().required().trim(),
+      email: Yup.string().required().trim(),
+      mobile: Yup.string().required().trim(),
+      address: Yup.string().required().trim(),
+      age: Yup.string().required().trim(),
+      bloodGroup: Yup.string().required().trim(),
+    })
+  });
+
+  // Handle form submit
+  const insertCall = () => {
+    myformik.handleSubmit();
+  };
+
+  // Fetch candidates
+  useEffect(() => {
+    candidatesget().subscribe({
+      next: (response) => {
+        if (response.status === 200) {
+          const updatedData = response.data.map((item:any) => ({
+            ...item,
+            Status: 1,
+        }));
+          setFData(updatedData);
         }
-      });
-    };
-   
-    return (
-        <Container>
+      },
+      error: (err) => {
+        console.error("Error fetching data:", err);
+      }
+    });
+  }, [count]);
+
+  // Handle candidate deletion
+  const handleDelete = (id) => {
+    deleteCandidate(id).subscribe({
+      next: (response: any) => {
+        if (response.status === 204) {
+          setCount(count + 1);
+        }
+      },
+      error: (error: any) => {
+        console.error('Error deleting candidate:', error);
+      }
+    });
+  };
+
+  return (
+    <Container>
+      {/* Form to submit data */}
       <div>
-      
         <Form.Group as={Col} xl={6} lg={6} md={6} sm={6}>
           <Form.Label>Full Name</Form.Label>
           <Form.Control
@@ -180,61 +179,20 @@ const MainComponent = () => {
         </Form.Group>
 
         <Button variant="primary" onClick={insertCall}>Submit</Button>
+      
+      <Col style={{ float: 'right', marginTop: '-50px' }}>
+        {selectedCandidate && (
+          <ApproveAndRevertBtn 
         
-      </div>
-
-      {/* Data Grid */}
-      <div>
-        <DataGrid
-         dataSource={fdata}
-         keyExpr="id"
-         showBorders={true}
-       
-         allowColumnResizing={true}
-         paging={{ pageSize: 5 }}
-         
-        >
-          <Column dataField="fullName" caption="Full Name" />
-          <Column dataField="email" caption="Email" />
-          <Column dataField="mobile" caption="Mobile" />
-          <Column dataField="age" caption="Age" />
-          <Column dataField="bloodGroup" caption="BloodGroup" />
-          <Column dataField="address" caption="Address" />
-          
-       
-          <Column
-            caption="Actions"
-            cellRender={(data) => (
-             <>
-              <Button 
-                variant="danger" 
-                onClick={() => handleDelete(data.data.id)}>
-                Delete
-              </Button>
-              <Button
-        variant="primary"
-        onClick={() => {
-          setSelectedCandidate(data.data); 
-          myformik.setValues({
-            fullName: data.data.fullName,
-            email: data.data.email,
-            mobile: data.data.mobile,
-            age: data.data.age,
-            address: data.data.address,
-            bloodGroup: data.data.bloodGroup,
-          });
-        }}
-      >
-        Edit
-      </Button>
-           
-             </>
-            )}
           />
-        </DataGrid>
+        )}
+      </Col>
+       
+        <TableComponent fdata={fdata} handleDelete={handleDelete}  setSelectedCandidate={setSelectedCandidate} 
+          myformik={myformik} />
       </div>
     </Container>
-    );
+  );
 };
 
 export default MainComponent;
